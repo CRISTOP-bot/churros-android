@@ -1,0 +1,5 @@
+out/
+*.log
+.DS_Store
+prebuilts/bin/**/*.stripped
+env/

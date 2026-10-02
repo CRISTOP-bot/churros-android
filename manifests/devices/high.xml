@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nivel ALTO: gama alta reciente (Tensor G2/G3, SD 8 Gen 2/3).
+  Mismo esquema que `mid.xml`; el device tree cambia, el product flavor es `churros-pro`.
+-->
+<manifest>
+  <project path="device/churros/pixel7"
+           name="LineageOS/android_device_churros_pixel7"
+           remote="churros-devices"
+           clone-depth="1" />
+
+  <project path="device/churros/common"
+           name="LineageOS/android_device_churros_common"
+           remote="churros-devices"
+           clone-depth="1" />
+</manifest>

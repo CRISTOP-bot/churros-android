@@ -1,0 +1,75 @@
+# ChurrOS Android — inicialización del sistema (init)
+#
+# Se copia a /system/etc/init/churros.rc por churros_base_init.mk.
+# Todo lo que se hace aquí es idempotente y tolera que el módulo no exista
+# (some() en vez de on <path>).
+
+on post-fs-data
+    # --- Almacenamiento: I/O y vm tuning ---------------------------------
+    # zRAM con 1.5x RAM: comprime páginas en RAM en vez de swap a flash
+    # (el swap a flash en dispositivos viejos mata el desgaste y la latencia).
+    write /sys/module/zswap/parameters/enabled 1
+    write /sys/module/zswap/parameters/max_pool_percent 20
+
+    # Eliminar el doble buffer de ZRAM mientras no hay presión de memoria
+    write /sys/module/zram/parameters/comp_algorithm zstd
+
+    # Scheduler de I/O: none en eMMC/UFS (el kernel ya ordena por bloque),
+    #mq-deadline como fallback seguro.
+    write /sys/block/sda/queue/scheduler none 2>/dev/null
+    write /sys/block/sda/queue/read_ahead_kb 512
+    write /sys/block/sda/queue/nr_requests 8
+
+on post-fs
+    # --- Memoria ---------------------------------------------------------
+    # Aumenta la ventana de swap para que el OOM killer tenga margen
+    write /proc/sys/vm/swappiness 100
+    write /proc/sys/vm/pressure_low 10
+    write /proc/sys/vm/pressure_high 90
+    write /proc/sys/vm/page-cluster 0
+
+    # Reduce laveur de los buffers de página (menos RAM en reposo)
+    write /proc/sys/vm/dirty_ratio 15
+    write /proc/sys/vm/dirty_background_ratio 5
+
+on early-init
+    # --- Kernel: Reduce la cantidad de tareas en paralelo ---------------
+    write /sys/kernel/debug/sched_features/sched_schedstats 0 2>/dev/null
+
+on init
+    # --- Red y servicios --------------------------------------------------
+    # Mantiene la tabla ARP/DNS corta y el log limited
+    setprop net.arp.unix 1
+    setprop net.tcp.buffersize.default 4096
+
+on property:sys.boot_completed=1
+    # --- Trabajo diferido: sólo cuando el usuario ya tiene el sistema ----
+    # Matar el spammer de apps preinstaladas que despertó durante el arranque.
+    write /sys/module/printk/parameters/printk_devkmsg 0 2>/dev/null
+
+    # Ajustar el governor sólo tras el arranque: antes responde más rápido el unlock
+    exec - system/bin/sh -c "for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo schedutil > \$g 2>/dev/null; done"
+
+on property:sys.boot_completed=1 && property:ro.churros.tier=lowend
+    # En gama baja se fuerzan pocos cores online para evitar el thermal
+    # throttle por uso sostenido durante los primeros minutos.
+    write /sys/devices/system/cpu/online 0-3
+
+service churros-zram /system/bin/churros_zramd
+    class core
+    user root
+    group root
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start churros-zram
+
+service churros-lmkd-tune /system/bin/churros_lmkd_tuner
+    class core
+    user root
+    group root
+    oneshot
+
+on post-fs-data
+    start churros-lmkd-tune

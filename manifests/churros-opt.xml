@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ChurrOS Android — fragmento de optimización.
+  Sólo parches de upstream AOSP que no rompen CTS. No es una ROM custom:
+  aquí únicamente cambiamos cosas de bajo riesgo con gain alto en potencia.
+-->
+<manifest>
+  <!-- zRAM + swap gestionado por userspace (sin parche de kernel) -->
+  <project path="external/android-swiftshader"
+           name="external/android-swiftshader"
+           groups="churros-opt" />
+</manifest>

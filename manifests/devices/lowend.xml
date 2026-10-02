@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nivel BAJO: dispositivos de 2015-2019 con 1-2 GB de RAM (Snapdragon 4xx/6xx, 32 bits
+  o 64 bits con bootloader desbloqueable). Requiere device tree propio: los blobs de
+  vendor antiguos ya no están en TheMuppets y hay que extraerlos del firmware stock.
+-->
+<manifest>
+  <project path="device/churros/lowend"
+           name="LineageOS/android_device_churros_lowend"
+           remote="churros-devices"
+           clone-depth="1" />
+</manifest>

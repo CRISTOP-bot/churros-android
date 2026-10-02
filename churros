@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# ChurrOS Android — dispatcher.
+# Delega en scripts/cli/<comando>.sh. Se ejecuta siempre desde la raíz del repo.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CMD="${1:-help}"
+shift || true
+
+case "$CMD" in
+  env|setup)   exec bash "$REPO_DIR/scripts/cli/env.sh" "$@" ;;
+  sync)        exec bash "$REPO_DIR/scripts/cli/sync.sh" "$@" ;;
+  build)       exec bash "$REPO_DIR/scripts/cli/build.sh" "$@" ;;
+  doctor)      exec bash "$REPO_DIR/scripts/cli/doctor.sh" "$@" ;;
+  check)       exec bash "$REPO_DIR/scripts/cli/check.sh" "$@" ;;
+  clean)       exec bash "$REPO_DIR/scripts/cli/clean.sh" "$@" ;;
+  help|-h|--help)
+    cat <<'EOF'
+ChurrOS Android — ROM multi-gama basada en AOSP
+
+  ./churros env                Instalar dependencias del host (Arch Linux)
+  ./churros sync               Descargar el árbol de fuentes con repo
+  ./churros build --lunch churros-lite
+  ./churros doctor             Comprobar que el host puede compilar
+  ./churros check              Comprobaciones estáticas del repo (rápido)
+  ./churros clean [--full]     Limpiar out/ y .repo
+
+Variables de entorno relevantes:
+  RELEASE_BRANCH  rama de AOSP (por defecto android15-release)
+  CHURROS_TIER    lowend | mid | high
+  BUILD_JOBS      jobs de make (por defecto nproc)
+EOF
+    ;;
+  *) echo "churros: comando desconocido: $CMD (prueba ./churros help)" >&2; exit 2 ;;
+esac

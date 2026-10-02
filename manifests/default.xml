@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ChurrOS Android — manifest base
+  Usa la release AOSP oficial (platform-tools_r*-cts / manifest Branch).
+
+  AOSP puro = sin GAPPS ni drivers privativos. El device tree (vendor blobs,
+  bootloader, kernel) lo añade el manifest de nivel correspondente.
+-->
+<manifest>
+  <remote name="aosp"
+          fetch="https://android.googlesource.com/platform/manifest"
+          review="https://android.googlesource.com/platform/manifest"/>
+
+  <!-- Nivel de release y rama. Se sobreescribe con CHURROS_BRANCH al sincronizar. -->
+  <default remote="aosp"
+           name="android-${RELEASE_BRANCH}"
+           revision="refs/heads/${RELEASE_BRANCH}"/>
+
+  <project path="build/soong"
+           name="build/soong"
+           groups="aosp-build-extras" />
+  <project path="build/blueprint"
+           name="build/blueprint"
+           groups="aosp-build-extras" />
+  <project path="build/make"
+           name="build/make"
+           groups="aosp-build-extras" />
+
+  <project path="art"
+           name="art"
+           groups="aosp-runtime" />
+  <project path="frameworks/base"
+           name="frameworks/base"
+           groups="aosp-framework" />
+  <project path="frameworks/native"
+           name="frameworks/native"
+           groups="aosp-runtime" />
+  <project path="framewares/opt/netd" tools:ignore="InvalidProjectName"
+           name="frameworks/opt/netd"
+           groups="aosp-framework" />
+  <project path="system/core"
+           name="system/core"
+           groups="aosp-core" />
+  <project path="system/init"
+           name="system/init"
+           groups="aosp-core" />
+
+  <project path="external/treble" name="external/treble" />
+</manifest>

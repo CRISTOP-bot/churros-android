@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Nivel MEDIO-ALTO: dispositivos con SoC de 2019-2022 (Snapdragon 7xx / 8 Gen 1).
+  Device trees de LineageOS (TheMuppets) con blobs de vendor preextraídos.
+
+  Para añadir un dispositivo: copia este archivo, cambia `path`, `name` de cada
+  proyecto y el PRODUCT_NAME del flavor correspondiente (ver docs/04-dispositivos.md).
+-->
+<manifest>
+  <project path="device/churros/pixel6"
+           name="LineageOS/android_device_churros_pixel6"
+           remote="churros-devices"
+           clone-depth="1" />
+
+  <project path="device/churros/common"
+           name="LineageOS/android_device_churros_common"
+           remote="churros-devices"
+           clone-depth="1" />
+</manifest>
