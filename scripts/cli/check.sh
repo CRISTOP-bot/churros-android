@@ -98,6 +98,29 @@ for f in product/common/AndroidProducts.mk \
   [ -f "$REPO_DIR/$f" ] && ok "$f existe" || bad "$f falta"
 done
 
+# Sin AndroidProducts.mk AOSP no encuentra el producto y `lunch` falla.
+head_ "Descubrimiento de productos (AndroidProducts.mk)"
+while IFS= read -r fdir; do
+  name=$(basename "$fdir")
+  ap="$fdir/AndroidProducts.mk"
+  if [ ! -f "$ap" ]; then
+    bad "$name no tiene AndroidProducts.mk (lunch $name no lo encontraría)"
+    continue
+  fi
+  grep -q "^PRODUCT_NAME := $name$" "$ap" \
+    && ok "$name declara PRODUCT_NAME en AndroidProducts.mk" \
+    || bad "$name: PRODUCT_NAME no coincide con el directorio"
+done < <(find "$REPO_DIR/product/flavors" -mindepth 1 -maxdepth 1 -type d | sort)
+
+# Cada manifest de dispositivo debe tener su flavor, y viceversa.
+head_ "Manifests de dispositivo ↔ flavors"
+for m in "$REPO_DIR"/manifests/devices/*.xml; do
+  base=$(basename "$m" .xml)
+  [ -d "$REPO_DIR/product/flavors/$base" ] \
+    && ok "manifest $base -> product/flavors/$base" \
+    || printf '  \033[1;33mAVISO\033[0m manifest %s sin flavor propio (puede usar un flavor de gama)\n' "$base"
+done
+
 for tier in churros-lite churros churros-pro; do
   for f in device.mk product.mk; do
     p="$REPO_DIR/product/flavors/$tier/$f"
@@ -109,6 +132,30 @@ for tier in churros-lite churros churros-pro; do
     && ok "$tier PRODUCT_NAME coherente" || bad "$tier PRODUCT_NAME incoherente"
 done
 
+# Flavors de dispositivo: heredan de un flavor de gama y deben acabar
+# declarando ro.churros.tier en algún punto de la cadena.
+head_ "Herencia de flavors de dispositivo"
+for fdir in "$REPO_DIR"/product/flavors/*/; do
+  name=$(basename "$fdir")
+  case "$name" in churros-lite|churros|churros-pro) continue ;; esac
+  dk="$fdir/device.mk"
+  if ! grep -qE 'inherit-product.*product/flavors/[a-z-]+/device\.mk' "$dk"; then
+    bad "$name no hereda de un flavor de gama"
+    continue
+  fi
+  parent=$(sed -n 's|.*product/flavors/\([a-z0-9-]*\)/device\.mk.*|\1|p' "$dk" | head -1)
+  [ -f "$REPO_DIR/product/flavors/$parent/device.mk" ] \
+    && ok "$name hereda de $parent" || bad "$name hereda de $parent, que no existe"
+
+  # ro.churros.tier puede estar en el propio device.mk o heredado
+  if grep -q "ro.churros.tier=" "$dk" \
+     || grep -rq "ro.churros.tier=" "$REPO_DIR/product/flavors/$parent/"; then
+    ok "$name declara ro.churros.tier (propio o heredado)"
+  else
+    bad "$name no termina declarando ro.churros.tier"
+  fi
+done
+
 head_ "Coherencia flavor ↔ init"
 for tier in churros-lite churros churros-pro; do
   want=$(case "$tier" in churros-lite) echo lowend ;; churros) echo mid ;; churros-pro) echo high ;; esac)
@@ -117,6 +164,52 @@ for tier in churros-lite churros churros-pro; do
   grep -q "ifeq (\$(CHURROS_TIER),$want)" "$REPO_DIR/product/common/churros_base_vars.mk" \
     && ok "$want optimizaciones en churros_base_vars.mk" || bad "falta bloque de optimización para $want"
 done
+
+# --- Flavors de dispositivo ----------------------------------------------
+head_ "Flavors de dispositivo"
+for d in "$REPO_DIR"/product/flavors/*/; do
+  name=$(basename "$d")
+  case "$name" in
+    churros-lite|churros|churros-pro) continue ;;  # ya validados arriba
+  esac
+  [ -f "$d/device.mk" ]   && ok "$name/device.mk"   || bad "$name/device.mk falta"
+  [ -f "$d/product.mk" ]  && ok "$name/product.mk"  || bad "$name/product.mk falta"
+  [ -f "$d/AndroidProducts.mk" ] \
+    && ok "$name/AndroidProducts.mk" || bad "$name sin AndroidProducts.mk (lunch no lo encuentra)"
+
+  # Hereda de un flavor de gama existente
+  parent=$(sed -n 's|.*product/flavors/\([a-z0-9-]*\)/device\.mk.*|\1|p' "$d/device.mk" | head -1)
+  if [ -n "$parent" ] && [ -f "$REPO_DIR/product/flavors/$parent/device.mk" ]; then
+    ok "$name hereda del flavor $parent"
+  else
+    bad "$name no hereda de un flavor de gama existente (parent='${parent:-ninguno}')"
+  fi
+
+  grep -q "^PRODUCT_NAME := churros-$name$" "$d/device.mk" \
+    && ok "$name PRODUCT_NAME coherente" || bad "$name PRODUCT_NAME incoherente"
+
+  # ro.churros.tier puede declararse aquí o heredarse del flavor de gama
+  if grep -q "ro.churros.tier=" "$d/device.mk" \
+     || { [ -n "$parent" ] && grep -rq "ro.churros.tier=" "$REPO_DIR/product/flavors/$parent/"; }; then
+    ok "$name resuelve ro.churros.tier"
+  else
+    bad "$name no termina declarando ro.churros.tier"
+  fi
+
+  # Un device tree sin doc de referencia es la via a horas perdidas
+  doc="$REPO_DIR/docs/08-$name.md"
+  [ "$name" = "taipei" ] && doc="$REPO_DIR/docs/08-moto-g55-taipei.md"
+  [ -f "$doc" ] && ok "$name tiene documento de referencia" \
+    || printf '  \033[1;33mAVISO\033[0m %s sin documento en docs/ (se pierde el contexto del hw)\n' "$name"
+done
+
+# Nada de datos de GPU en el producto comun: eso depende del dispositivo.
+head_ "El producto comun no declara datos de GPU"
+if grep -v '^[[:space:]]*#' "$REPO_DIR/product/common/churros_base_vars.mk" | grep -q 'ro.hardware.egl'; then
+  bad "ro.hardware.egl esta en churros_base_vars.mk; es dato del dispositivo (PowerVR/Adreno/Mali)"
+else
+  ok "ro.hardware.egl solo en flavors de dispositivo"
+fi
 
 # --- Props duplicadas -----------------------------------------------------
 head_ "Propiedades de sistema duplicadas"

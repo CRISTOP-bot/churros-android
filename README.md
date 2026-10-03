@@ -9,6 +9,12 @@ cubrir dispositivos viejos, medios y nuevos con la misma base de código.
 | `churros` | Media | 2019-2022, SD 7xx / 8 Gen 1 | 4-6 GB |
 | `churros-pro` | Alta | 2022+, Tensor G2/G3, SD 8 Gen 2/3 | 8-12 GB |
 
+Hay además flavors de **dispositivo concreto** que heredan de uno de gama y sólo
+declaran lo que es propio del hardware. El primero es
+`churros-taipei` (Motorola moto g55 5G, Dimensity 7025): el caso difícil, con
+GPU PowerVR sin driver abierto y sin bootloader desbloqueable — ver su
+[documentación](docs/08-moto-g55-taipei.md).
+
 ## Qué es y qué no es
 
 - **Es**: AOSP vanilla (sin GAPPS, sin telemetría de terceros), un árbol de
@@ -66,6 +72,7 @@ Ejemplos de iteración:
 | [docs/05-flashing.md](docs/05-flashing.md) | Compilar, flashear y recuperar |
 | [docs/06-roadmap.md](docs/06-roadmap.md) | Estado real y decisiones pendientes |
 | [docs/07-medicion.md](docs/07-medicion.md) | Cómo medir para justificar un ajuste |
+| [docs/08-moto-g55-taipei.md](docs/08-moto-g55-taipei.md) | Port al Motorola moto g55 5G (Dimensity 7025) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dónde va cada tipo de cambio |
 
 ## Layout

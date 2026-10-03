@@ -53,6 +53,20 @@ device/churros/<nombre>/
    fastboot flashall
    ```
 
+## Dispositivo en curso: moto g55 5G (`taipei`)
+
+El único dispositivo con trabajo ya empezado. Todo el detalle está en
+[docs/08-moto-g55-taipei.md](08-moto-g55-taipei.md); el resumen:
+
+- SoC `mt6855` (Dimensity 7025), GPU **PowerVR IMG BXM-8-256**, 8 GB, kernel 5.10.
+- Flavor `product/flavors/taipei/`, manifest `manifests/devices/taipei.xml`.
+- `ro.hardware.egl=powervr` es obligatorio: mal puesto, arranca y da pantalla
+  negra. Por eso el producto común ya no declara datos de GPU.
+- **Bloqueante**: Motorola no concede clave de desbloqueo de bootloader a este
+  modelo. Sin eso no hay flash. Se comprobará antes de invertir tiempo.
+- No hay device tree pública (LineageOS no lo soporta), así que el port es
+  desde cero, y el punto más caro es la política SELinux de MediaTek.
+
 ## Notas por gamas
 
 ### Gama baja (1-2 GB, 2015-2019)
