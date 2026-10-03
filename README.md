@@ -10,10 +10,12 @@ cubrir dispositivos viejos, medios y nuevos con la misma base de código.
 | `churros-pro` | Alta | 2022+, Tensor G2/G3, SD 8 Gen 2/3 | 8-12 GB |
 
 Hay además flavors de **dispositivo concreto** que heredan de uno de gama y sólo
-declaran lo que es propio del hardware. El primero es
-`churros-taipei` (Motorola moto g55 5G, Dimensity 7025): el caso difícil, con
-GPU PowerVR sin driver abierto y sin bootloader desbloqueable — ver su
-[documentación](docs/08-moto-g55-taipei.md).
+declaran lo que es propio del hardware:
+
+| Flavor | Dispositivo | SoC / GPU | Lo que hay que saber |
+|---|---|---|---|
+| `churros-taiko` | Xiaomi Redmi Pad 2 | Helio G100-Ultra / Mali-G57 | **El mejor para empezar**: se desbloquea con Mi Unlock y hay device tree público de la misma plataforma ([doc](docs/09-redmi-pad-2-taiko.md)) |
+| `churros-taipei` | Motorola moto g55 5G | Dimensity 7025 / PowerVR | El caso difícil: GPU sin driver abierto en AOSP y **Motorola no da claves de unlock** ([doc](docs/08-moto-g55-taipei.md)) |
 
 ## Qué es y qué no es
 
@@ -73,6 +75,7 @@ Ejemplos de iteración:
 | [docs/06-roadmap.md](docs/06-roadmap.md) | Estado real y decisiones pendientes |
 | [docs/07-medicion.md](docs/07-medicion.md) | Cómo medir para justificar un ajuste |
 | [docs/08-moto-g55-taipei.md](docs/08-moto-g55-taipei.md) | Port al Motorola moto g55 5G (Dimensity 7025) |
+| [docs/09-redmi-pad-2-taiko.md](docs/09-redmi-pad-2-taiko.md) | Port al Xiaomi Redmi Pad 2 (Helio G100-Ultra) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dónde va cada tipo de cambio |
 
 ## Layout

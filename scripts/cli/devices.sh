@@ -17,6 +17,7 @@ printf '%-14s %-9s %-34s %s\n' "churros-lite" "lowend" "manifests/devices/lowend
 printf '%-14s %-9s %-34s %s\n' "churros" "mid" "manifests/devices/mid.xml" "plantilla"
 printf '%-14s %-9s %-34s %s\n' "churros-pro" "high" "manifests/devices/high.xml" "plantilla"
 printf '%-14s %-9s %-34s %s\n' "churros-taipei" "mid" "manifests/devices/taipei.xml" "sin portar"
+printf '%-14s %-9s %-34s %s\n' "churros-taiko" "mid" "manifests/devices/taiko.xml" "sin portar"
 
 echo
 echo "${BLUE}Dispositivos declarados en los manifests:${OFF}"
@@ -33,6 +34,11 @@ echo
 echo "${YELLOW}moto g55 5G (taipei)${OFF}: antes de tocar nada, lee"
 echo "  ${BLUE}docs/08-moto-g55-taipei.md${OFF}. El bloqueante no es el codigo:"
 echo "  Motorola no da claves de unlock para ese modelo."
+echo
+echo "${BLUE}Redmi Pad 2 (taiko)${OFF}: el mejor candidato para empezar."
+echo "  ${BLUE}docs/09-redmi-pad-2-taiko.md${OFF}. Desbloqueo con Mi Unlock"
+echo "  (cuenta Mi con 168 h de espera) y device tree publico de referencia"
+echo "  para la misma plataforma mt6789 (el Redmi Pad, yunluo)."
 echo
 echo "${YELLOW}Nota${OFF}: los device trees son punteros a repos externos. Que un"
 echo "manifest exista no significa que el repositorio de al lado tenga el"

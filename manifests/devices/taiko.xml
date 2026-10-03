@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ChurrOS Android — manifest de dispositivo
+  Xiaomi Redmi Pad 2 (codename: taiko)
+
+  HARDWARE (verificado, ver docs/09-redmi-pad-2-taiko.md):
+    SoC        MediaTek Helio G100-Ultra (MT6789H), misma plataforma mt6789
+               que el Redmi Pad (yunluo)
+    CPU        2x A76 2.2 GHz + 6x A55 2.0 GHz, arm64
+    GPU        ARM Mali-G57 MC2
+    RAM        4 / 6 / 8 GB LPDDR
+    Pantalla   11" 1600x2560 IPS, 90 Hz, 600 nits
+    Almacen.   UFS 2.2 + microSD
+    Android    15 (HyperOS 2)
+    Modelos    25040RP0AG (global), 25040RP0AI (ID, taiko_id), variante 4G
+    Extras     SIN NFC, sin lector de huella, jack 3.5 mm, 4 altavoces
+
+  DIFERENCIA CLAVE CON EL G55: aquí el bootloader SÍ se puede desbloquear
+  (Mi Unlock, oficial de Xiaomi), con la espera de 168 h de la cuenta. Y la
+  plataforma mt6789 tiene un device tree público y mantenido
+  (xiaomi-mt6789-devs, Redmi Pad / yunluo) que sirve de base de partida.
+
+  Este manifest no compila todavía: falta device/churros/taiko. Los <project>
+  de abajo son las fuentes reales que existen hoy.
+-->
+<manifest>
+  <!--
+    Kernel de la plataforma mt6789. El Redmi Pad (yunluo) usa este kernel y
+    es el mismo SoC: es la mejor base disponible. La rama la fija el device
+    tree en BoardConfig.mk.
+  -->
+  <project path="kernel/xiaomi/yunluo"
+           name="kernel_xiaomi-yunluo"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+
+  <!--
+    Device tree de referencia del Redmi Pad (yunluo), maintained con
+    LineageOS 23.0. NO es el de taiko (panel y stock distintos), pero es la
+    referencia más completa que hay de un mt6789 con A/B, vendor_extra y
+    política SELinux ya resueltos. Se usa como andamiaje para escribir
+    device/churros/taiko.
+  -->
+  <project path="device/xiaomi/yunluo"
+           name="android_device_xiaomi_yunluo"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+
+  <!--
+    Módulos de conectividad del kernel (WLAN, Bluetooth MT66xx, GPS,
+    conninfra/connfem), como repos separados en el release de Xiaomi.
+    Si el kernel del device tree los trae built-in, se pueden quitar.
+  -->
+  <project path="vendor/mediatek/kernel_modules/connectivity/common"
+           name="vendor-mediatek-kernel_modules-connectivity-common"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/conninfra"
+           name="vendor-mediatek-kernel_modules-connectivity-conninfra"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/connfem"
+           name="vendor-mediatek-kernel_modules-connectivity-connfem"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/bt/mt66xx"
+           name="vendor-mediatek-kernel_modules-connectivity-bt-mt66xx"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/gps"
+           name="vendor-mediatek-kernel_modules-connectivity-gps"
+           remote="xiaomi-mt6789-devs"
+           clone-depth="1" />
+</manifest>

@@ -53,6 +53,26 @@ device/churros/<nombre>/
    fastboot flashall
    ```
 
+## Dispositivo en curso: Redmi Pad 2 (`taiko`)
+
+Xiaomi Redmi Pad 2, Helio G100-Ultra (MT6789H), Mali-G57 MC2, 11" 1600x2560
+90 Hz, Android 15. Detalle completo en
+[docs/09-redmi-pad-2-taiko.md](09-redmi-pad-2-taiko.md).
+
+Es el candidato natural para empezar el proyecto porque:
+
+- **Se desbloquea**: Mi Unlock, oficial de Xiaomi (cuenta Mi con 168 h de
+  espera). No hay que depender de servicios de terceros.
+- **La plataforma mt6789 ya está resuelta por otra gente**: el Redmi Pad
+  (`yunluo`) tiene device tree y kernel públicos con LineageOS 23.0 y SELinux
+  enforcing. Mismo SoC, así que el andamiaje es directo.
+- GPU Mali: AOSP tiene el camino estándar, sin drivers cerrados raros como el
+  PowerVR del G55.
+
+Lo que hay que rehacer igualmente: el panel (1600x2560, el `yunluo` monta
+2000x1200) y los blobs del `/vendor`, que hay que extraer del HyperOS 2 de **tu**
+variante (`taiko` global WiFi o `taiko_id` 4G: no son intercambiables).
+
 ## Dispositivo en curso: moto g55 5G (`taipei`)
 
 El único dispositivo con trabajo ya empezado. Todo el detalle está en
