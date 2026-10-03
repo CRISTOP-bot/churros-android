@@ -16,6 +16,7 @@ case "$CMD" in
   devices)     exec bash "$REPO_DIR/scripts/cli/devices.sh" "$@" ;;
   flash)       exec bash "$REPO_DIR/scripts/cli/flash.sh" "$@" ;;
   measure)     exec bash "$REPO_DIR/scripts/measure/measure.sh" "$@" ;;
+  analyze)     exec bash "$REPO_DIR/scripts/cli/analyze.sh" "$@" ;;
   doctor)      exec bash "$REPO_DIR/scripts/cli/doctor.sh" "$@" ;;
   check)       exec bash "$REPO_DIR/scripts/cli/check.sh" "$@" ;;
   clean)       exec bash "$REPO_DIR/scripts/cli/clean.sh" "$@" ;;
@@ -23,21 +24,24 @@ case "$CMD" in
     cat <<'EOF'
 ChurrOS Android — ROM multi-gama basada en AOSP
 
-  ./churros doctor                  ¿Puede este host compilar AOSP?
-  ./churros env                     Dependencias del host (Arch Linux)
-  ./churros sync [--tier lowend]    Descarga el árbol de fuentes (~250 GB)
-  ./churros build --lunch churros   Compila (usa CHURROS_TIER)
-  ./churros native                  Compila los binarios NDK de native/
-  ./churros devices                 Lista gamas y device trees soportados
-  ./churros flash --lunch churros    Plan de flasheo (--yes lo ejecuta)
-  ./churros measure boot|mem|idle|gfx  Métricas por adb (ver docs/07-medicion.md)
-  ./churros check                   Comprobaciones estáticas del repo
-  ./churros clean [--full]          Limpia out/ y ccache
+  ./churros doctor                     ¿Puede este host compilar AOSP?
+  ./churros env                        Dependencias del host (Arch Linux)
+  ./churros sync [--tier lowend]       Descarga el árbol de fuentes (~250 GB)
+  ./churros build --lunch churros      Compila (usa CHURROS_TIER)
+  ./churros native                     Compila los binarios NDK de native/
+  ./churros devices                    Lista gamas y device trees soportados
+  ./churros flash --lunch churros      Plan de flasheo (--yes lo ejecuta)
+  ./churros measure boot|mem|idle|gfx  Métricas por adb (docs/07-medicion.md)
+  ./churros analyze                    Peso de imágenes y tiempo de build
+  ./churros check                      Comprobaciones estáticas del repo
+  ./churros clean [--full]             Limpia out/ y ccache
 
 Ejemplos:
   ./churros sync --tier mid
   ./churros build --lunch churros-lite --tier lowend --jobs 32
-  ./churros build --lunch churros-pro --target aosp_arm64 --make-arg m services
+  ./churros build --lunch churros --target aosp_arm64 --make-arg m services
+  ./churros analyze --compare          esta build vs la anterior
+  ./churros analyze --big 30           los 30 ficheros mayores de /system
 
 Variables de entorno:
   RELEASE_BRANCH  rama de AOSP (por defecto android15-release)

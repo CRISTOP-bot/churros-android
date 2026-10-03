@@ -17,6 +17,8 @@ CHURROS_TIER="${CHURROS_TIER:-mid}"
 BUILD_TARGET=""
 BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
 CHURROS_TARGET="${CHURROS_TARGET:-aosp_arm64}"
+CHURROS_DEX_MODE="${CHURROS_DEX_MODE:-speed}"
+CHURROS_OPT_LEVEL="${CHURROS_OPT_LEVEL:-2}"
 SKIP_PATCHES=0
 EXTRA_MAKE_ARGS=()
 
@@ -33,6 +35,8 @@ while [ $# -gt 0 ]; do
     --target) BUILD_TARGET="$2"; shift 2 ;;
     --make-arg) EXTRA_MAKE_ARGS+=("$2"); shift 2 ;;
     --skip-patches) SKIP_PATCHES=1; shift ;;
+    --dex-mode) CHURROS_DEX_MODE="$2"; shift 2 ;;
+    --opt-level) CHURROS_OPT_LEVEL="$2"; shift 2 ;;
     *) echo "build: opción desconocida $1" >&2; exit 2 ;;
   esac
 done
@@ -88,11 +92,12 @@ fi
 
 info "Lunch: $LUNCH_${BUILD_TARGET}-${BUILD_TYPE#user}"
 info "Jobs: $BUILD_JOBS"
-info "cCache: $(ccache -s 2>/dev/null | awk '/Hits|hit rate/ {print}' | head -1 || echo 'no disponible')"
+info "Producto: dex=$CHURROS_DEX_MODE  -O$CHURROS_OPT_LEVEL"
+if command -v ccache >/dev/null 2>&1; then
+  info "ccache: $(ccache -s 2>/dev/null | awk -F': *' '/Cacheable calls|Hits|Misses/ {printf "%s=%s ", $1, $2}')"
+fi
 
-export CHURROS_BUILD_TYPE="$BUILD_TYPE"
-export CHURROS_TIER
-export CHURROS_TARGET
+BUILD_START=$(date +%s)
 
 set +e
 (
@@ -100,16 +105,41 @@ set +e
   source envsetup.sh
   setarch "$(uname -m)" lunch "${LUNCH}_${BUILD_TARGET}-${BUILD_TYPE#user}"
   export BUILD_JOBS USE_CCACHE=1
-  export CHURROS_BUILD_TYPE="$BUILD_TYPE" CHURROS_TIER="$CHURROS_TIER" CHURROS_TARGET="$CHURROS_TARGET"
+  export CHURROS_BUILD_TYPE="$BUILD_TYPE" CHURROS_TIER="$CHURROS_TIER" \
+         CHURROS_TARGET="$CHURROS_TARGET" CHURROS_DEX_MODE="$CHURROS_DEX_MODE" \
+         CHURROS_OPT_LEVEL="$CHURROS_OPT_LEVEL"
   make -j"$BUILD_JOBS" "${EXTRA_MAKE_ARGS[@]}"
 )
 STATUS=$?
 set -e
 
+BUILD_END=$(date +%s)
+BUILD_SECS=$((BUILD_END - BUILD_START))
+record_stats() {
+  local result="$1"
+  local stats="$SRC_DIR/out/churros-build-stats.tsv"
+  mkdir -p "$SRC_DIR/out"
+  {
+    # fecha lunch target tipo resultado segundos jobs hits_ccache sha dex opt
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+      "$(date +%Y-%m-%dT%H:%M:%S)" \
+      "$LUNCH" "$BUILD_TARGET" "$BUILD_TYPE" \
+      "$result" "$BUILD_SECS" "$BUILD_JOBS" \
+      "$(ccache -s 2>/dev/null | awk -F': *' '/^  Hits/ {print $2; exit}')" \
+      "$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo '-')" \
+      "$CHURROS_DEX_MODE" "$CHURROS_OPT_LEVEL"
+  } >>"$stats"
+  info "Estadísticas anotadas en $stats"
+}
+
 if [ "$STATUS" -eq 0 ]; then
   ART="$SRC_DIR/out/target/product/$BUILD_TARGET/$LUNCH-$BUILD_TARGET-${BUILD_TYPE#user}"
-  info "Build OK -> $ART"
-  info "Para flashear: fastboot flash --all <los archivos de $ART>"
+  printf 'Build OK en %dh %dm %ds\n' \
+    $((BUILD_SECS / 3600)) $((BUILD_SECS % 3600 / 60)) $((BUILD_SECS % 60))
+  info "Build -> $ART"
+  info "Para flashear: ./churros flash --lunch $LUNCH --target $BUILD_TARGET"
+  record_stats ok
 else
-  die "build falló (código $STATUS); revisa out/error.log o repite con -j$((BUILD_JOBS / 2))"
+  record_stats failed
+  die "build falló (código $STATUS) tras $((BUILD_SECS / 60)) min; revisa out/error.log o repite con -j$((BUILD_JOBS / 2))"
 fi

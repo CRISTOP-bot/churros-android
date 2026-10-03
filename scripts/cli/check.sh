@@ -12,6 +12,8 @@ ok()   { printf '  \033[1;32mOK\033[0m    %s\n' "$*"; OK=$((OK + 1)); }
 bad()  { printf '  \033[1;31mFALLO\033[0m %s\n' "$*"; FAIL=$((FAIL + 1)); }
 head_() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 
+SRC_DIR="${SRC_DIR:-$HOME/android/churros}"
+
 echo "ChurrOS Android — check"
 
 # --- Bash -----------------------------------------------------------------
@@ -218,6 +220,54 @@ else
   ok "ro.hardware.egl solo en flavors de dispositivo"
 fi
 
+# --- Coherencia de la lista de bloat --------------------------------------
+# Un paquete que se quita y se vuelve a añadir en otra rama es una lista que
+# se contradice: el resultado depende del orden de los ifeq. También detecta
+# nombres repetidos, que suelen ser copy-paste.
+head_ "Lista de bloat coherente"
+if command -v python3 >/dev/null 2>&1; then
+  python3 - "$REPO_DIR/product" <<'PYEOF' && ok "bloat sin contradicciones" || bad "bloat contradictorio (ver arriba)"
+import re, sys, pathlib
+files = sorted(pathlib.Path(sys.argv[1]).rglob('*.mk'))
+cond = re.compile(r'^\s*(ifeq|ifneq|ifdef|ifndef|else|endif)\b')
+problems = []
+seen_names = {}
+for f in files:
+    scope, added, removed = 0, [], []
+    for line in f.read_text().splitlines():
+        if cond.match(line):
+            scope += 1
+            added, removed = [], []
+            continue
+        m_add = re.match(r'^\s*PRODUCT_PACKAGES\s*\+=\s*(.*)$', line)
+        m_rem = re.match(r'^\s*PRODUCT_PACKAGES\s*-=\s*(.*)$', line)
+        if m_rem:
+            for name in m_rem.group(1).replace('\\', ' ').split():
+                removed.append(name)
+        elif m_add:
+            added.extend(m_add.group(1).replace('\\', ' ').split())
+        # continuaciones sueltas: "    Nombre \"
+        elif re.match(r'^\s+[A-Za-z][\w.]*\s*\\?\s*$', line):
+            name = line.strip().rstrip('\\').strip()
+            if name and re.match(r'^[A-Za-z][\w.]*$', name):
+                removed.append(name)
+    for name in removed:
+        if name in added:
+            problems.append(f"{f.name}: {name} se quita y se añade en la misma rama")
+        if name in removed[:removed.index(name)]:
+            problems.append(f"{f.name}: {name} se quita dos veces (redundante)")
+    for name in set(removed):
+        seen_names.setdefault(name, []).append(f.name)
+for name, where in sorted(seen_names.items()):
+    if len(where) > 1:
+        problems.append(f"{name} aparece en {len(where)} ficheros: {', '.join(where)}")
+print("\n".join(problems))
+sys.exit(1 if problems else 0)
+PYEOF
+else
+  ok "omitido (sin python3)"
+fi
+
 # --- Props duplicadas -----------------------------------------------------
 head_ "Propiedades de sistema duplicadas"
 if command -v python3 >/dev/null 2>&1; then
@@ -309,7 +359,8 @@ for d in README.md \
          docs/04-dispositivos.md \
          docs/05-flashing.md \
          docs/06-roadmap.md \
-         docs/07-medicion.md; do
+         docs/07-medicion.md \
+         docs/10-peso-y-tiempos.md; do
   [ -f "$REPO_DIR/$d" ] && ok "$d" || bad "$d falta"
 done
 
@@ -319,6 +370,35 @@ if [ -f "$REPO_DIR/README.md" ]; then
   while IFS= read -r link; do
     [ -f "$REPO_DIR/$link" ] && ok "README -> $link" || bad "README enlaza a $link pero no existe"
   done < <(grep -oP '\]\(\K[^)#]+(?=\))' "$REPO_DIR/README.md" | grep -v '^https\?://')
+fi
+
+# --- Variables de producto contra el árbol AOSP ----------------------------
+# Es el único check que puede decir la verdad sobre los nombres de PRODUCT_*:
+# si el workspace de AOSP está descargado, busca cada variable que usamos en el
+# producto y comprueba que el sistema de build la consume. Sin árbol no se puede
+# afirmar nada, y en vez de dar un OK vacío lo dice.
+head_ "Variables PRODUCT_* conocidas por AOSP"
+# Se ignoran las líneas comentadas: un PRODUCT_PACKAGES -= comentado no es
+# código, y validarlo daría falsos positivos.
+VARS=$(find "$REPO_DIR/product" -name '*.mk' -exec grep -hv '^[[:space:]]*#' {} + \
+        | grep -oE '\bPRODUCT_[A-Z0-9_]+' | sort -u)
+N_VARS=$(printf '%s\n' "$VARS" | grep -c . || echo 0)
+if [ -d "$SRC_DIR/build/make" ]; then
+  UNKNOWN=0
+  for v in $VARS; do
+    if grep -rqF "$v" "$SRC_DIR/build/make" "$SRC_DIR/build/soong" \
+         "$SRC_DIR/system" "$SRC_DIR/frameworks" 2>/dev/null; then
+      :
+    else
+      bad "$v no aparece en el árbol AOSP de $SRC_DIR"
+      UNKNOWN=$((UNKNOWN + 1))
+    fi
+  done
+  [ "$UNKNOWN" -eq 0 ] && ok "las $N_VARS variables del producto existen en AOSP"
+else
+  printf '  \033[1;33mOMITIDO\033[0m sin árbol AOSP en %s: %s variables sin verificar\n' \
+    "$SRC_DIR" "$N_VARS"
+  printf '             tras compilar, repite con SRC_DIR=<árbol> ./churros check\n'
 fi
 
 # --- Repo ----------------------------------------------------------------
