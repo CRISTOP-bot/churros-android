@@ -38,6 +38,16 @@ sólo requieren re-empaquetar.
 
 ## Flashear
 
+Hay un atajo que calcula el orden correcto (arranque → super → resto) y por
+defecto **no escribe nada** hasta que se pasa `--yes`:
+
+```bash
+./churros flash --lunch churros            # sólo muestra el plan
+./churros flash --lunch churros --yes      # flashea
+```
+
+A mano, el orden es:
+
 ```bash
 cd ~/android/churros/out/target/product/aosp_arm64/churros-aosp_arm64-debug/
 

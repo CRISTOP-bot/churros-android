@@ -50,6 +50,9 @@ Ejemplos de iteración:
 
 # gama baja, sin parches de plataforma
 ./churros build --lunch churros-lite --tier lowend --skip-patches -j32
+
+# medir el arranque en el dispositivo conectado
+./churros measure boot
 ```
 
 ## Documentación
@@ -62,6 +65,7 @@ Ejemplos de iteración:
 | [docs/04-dispositivos.md](docs/04-dispositivos.md) | Añadir un dispositivo nuevo |
 | [docs/05-flashing.md](docs/05-flashing.md) | Compilar, flashear y recuperar |
 | [docs/06-roadmap.md](docs/06-roadmap.md) | Estado real y decisiones pendientes |
+| [docs/07-medicion.md](docs/07-medicion.md) | Cómo medir para justificar un ajuste |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dónde va cada tipo de cambio |
 
 ## Layout
@@ -74,7 +78,8 @@ product/flavors/        churros-lite | churros | churros-pro
 native/                 fuentes C de los binarios de runtime (NDK)
 prebuilts/bin/<abi>/    binarios generados por ./churros native
 patches/                parches a la plataforma AOSP (repo apply)
-scripts/cli/            env, sync, build, native, doctor, check, clean
+scripts/cli/            env, sync, build, native, doctor, devices, flash, check, clean
+scripts/measure/        métricas por adb (arranque, reposo, memoria, gfx)
 .github/workflows/      CI con ./churros check
 ```
 
@@ -97,7 +102,7 @@ flags de CTS/VTS, ni nada que rompa la estabilidad del arranque.
 | Árbol de producto (3 flavors) | hecho |
 | Capa de init / props de optimización | hecho |
 | Fuentes nativas + script de build NDK | hecho |
-| Scripts de sync/build/native/check | hecho |
+| Scripts de sync/build/native/devices/flash/measure/check | hecho |
 | CI | hecho |
 | Device trees concretos | pendiente |
 | Primer build completo | pendiente de máquina de build |

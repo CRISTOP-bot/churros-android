@@ -21,11 +21,31 @@ while IFS= read -r f; do
 done < <(find "$REPO_DIR/scripts" -name '*.sh' 2>/dev/null)
 bash -n "$REPO_DIR/churros" && ok "churros" || bad "churros"
 
+# Cada subcomando del dispatcher debe tener su script
+head_ "Dispatcher"
+# Cada línea "cmd|alias)  exec bash <ruta>" debe apuntar a un script existente.
+while read -r cmd script; do
+  [ -n "$cmd" ] || continue
+  target="$REPO_DIR/$script"
+  if [ ! -f "$target" ]; then
+    bad "$cmd no tiene $script"
+  elif bash -n "$target" 2>/dev/null; then
+    ok "$cmd -> $script"
+  else
+    bad "$script no es bash válido"
+  fi
+done < <(awk '/exec bash/ {
+    match($0, /^[[:space:]]*[a-z|]+/); cmds = substr($0, RSTART, RLENGTH)
+    match($0, /scripts\/[a-zA-Z0-9\/._-]+/); script = substr($0, RSTART, RLENGTH)
+    n = split(cmds, a, /[|[:space:]]+/)
+    for (i = 1; i <= n; i++) if (a[i] != "") print a[i], script
+  }' "$REPO_DIR/churros")
+
 if command -v shellcheck >/dev/null 2>&1; then
   head_ "shellcheck (error)"
   while IFS= read -r f; do
     if shellcheck -S error -e SC1091 "$f" 2>/dev/null; then ok "$f"; else bad "$f"; fi
-  done < <(find "$REPO_DIR/scripts" -name '*.sh' 2>/dev/null; printf '%s\n' "$REPO_DIR/churros")
+  done < <(find "$REPO_DIR/scripts" -name '*.sh' 2>/dev/null)
 fi
 
 # --- XML ------------------------------------------------------------------
@@ -38,6 +58,36 @@ while IFS= read -r f; do
       && ok "$(basename "$f")" || bad "$(basename "$f")"
   fi
 done < <(find "$REPO_DIR/manifests" -name '*.xml')
+
+head_ "Manifests: proyectos y remotos"
+if command -v python3 >/dev/null 2>&1; then
+  python3 - "$REPO_DIR/manifests" <<'PY' && ok "proyectos sin path duplicado y remotos declarados" || bad "manifests con problemas (ver arriba)"
+import sys, pathlib, xml.etree.ElementTree as ET
+base = pathlib.Path(sys.argv[1])
+main = ET.parse(base / 'default.xml').getroot()
+remotes = {r.get('name') for r in main.findall('remote')}
+problems = []
+seen_paths = {}
+for f in sorted(base.rglob('*.xml')):
+    root = ET.parse(f).getroot()
+    for pr in root.findall('project'):
+        path, name = pr.get('path'), pr.get('name')
+        remote = pr.get('remote')
+        if not path or not name:
+            problems.append(f"{f.name}: <project> sin path/name")
+        # El mismo path puede aparecer en manifests de gamas distintas (sólo
+        # se sincroniza uno de ellos). Lo raro es que apunte a otro repo.
+        if path in seen_paths and seen_paths[path][0] != name:
+            problems.append(f"{path} apunta a {seen_paths[path][0]} y a {name}")
+        seen_paths[path] = (name, f.name)
+        if remote and remote not in remotes:
+            problems.append(f"{f.name}: remote '{remote}' no declarado en default.xml")
+print("\n".join(problems))
+sys.exit(1 if problems else 0)
+PY
+else
+  ok "omitido (sin python3)"
+fi
 
 # --- Árvore de producto ---------------------------------------------------
 head_ "Árbol de producto"
@@ -158,7 +208,8 @@ for d in README.md \
          docs/03-optimizacion.md \
          docs/04-dispositivos.md \
          docs/05-flashing.md \
-         docs/06-roadmap.md; do
+         docs/06-roadmap.md \
+         docs/07-medicion.md; do
   [ -f "$REPO_DIR/$d" ] && ok "$d" || bad "$d falta"
 done
 

@@ -13,6 +13,9 @@ case "$CMD" in
   sync)        exec bash "$REPO_DIR/scripts/cli/sync.sh" "$@" ;;
   build)       exec bash "$REPO_DIR/scripts/cli/build.sh" "$@" ;;
   native)      exec bash "$REPO_DIR/scripts/cli/native.sh" "$@" ;;
+  devices)     exec bash "$REPO_DIR/scripts/cli/devices.sh" "$@" ;;
+  flash)       exec bash "$REPO_DIR/scripts/cli/flash.sh" "$@" ;;
+  measure)     exec bash "$REPO_DIR/scripts/measure/measure.sh" "$@" ;;
   doctor)      exec bash "$REPO_DIR/scripts/cli/doctor.sh" "$@" ;;
   check)       exec bash "$REPO_DIR/scripts/cli/check.sh" "$@" ;;
   clean)       exec bash "$REPO_DIR/scripts/cli/clean.sh" "$@" ;;
@@ -25,6 +28,9 @@ ChurrOS Android — ROM multi-gama basada en AOSP
   ./churros sync [--tier lowend]    Descarga el árbol de fuentes (~250 GB)
   ./churros build --lunch churros   Compila (usa CHURROS_TIER)
   ./churros native                  Compila los binarios NDK de native/
+  ./churros devices                 Lista gamas y device trees soportados
+  ./churros flash --lunch churros    Plan de flasheo (--yes lo ejecuta)
+  ./churros measure boot|mem|idle|gfx  Métricas por adb (ver docs/07-medicion.md)
   ./churros check                   Comprobaciones estáticas del repo
   ./churros clean [--full]          Limpia out/ y ccache
 
