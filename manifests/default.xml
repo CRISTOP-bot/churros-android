@@ -20,6 +20,15 @@
     cambia el fetch por https://github.com/LineageOS y los <project name=...>
     de manifests/devices/*.xml.
   -->
+  <!--
+    Código abierto que publica Motorola (kernel y módulos de conectividad de
+    los SoCs MediaTek). Es lo único del fabricante que se puede distribuir
+    legalmente: los blobs de /vendor (PowerVR, cámara, RIL) NO se publican.
+  -->
+  <remote name="motorola"
+          fetch="https://github.com/MotorolaMobilityLLC"
+          review="https://github.com/MotorolaMobilityLLC" />
+
   <remote name="churros-devices"
           fetch="https://github.com/Hoyuse/churros-android-devices"
           review="https://github.com/Hoyuse/churros-android-devices"/>

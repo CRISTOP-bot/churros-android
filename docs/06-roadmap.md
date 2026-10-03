@@ -15,12 +15,25 @@ Estado real del proyecto, en orden de lo que desbloquea lo siguiente.
 - [x] Guía de medición (`docs/07-medicion.md`) para justificar cada ajuste.
 - [x] CI con `./churros check` y shellcheck.
 
+## Dispositivo en curso: moto g55 5G
+
+- [x] Hardware documentado y verificado ([docs/08](08-moto-g55-taipei.md)).
+- [x] Manifest de dispositivo con las fuentes reales de kernel de Motorola.
+- [x] Flavor `churros-taipei` con las props obligatorias (PowerVR, heaps de
+      8 GB, kernel 5.10 no-GKI).
+- [ ] **Confirmar el desbloqueo del bootloader.** Es lo único que puede parar
+      el proyecto, y Motorola no lo da en este modelo. Va primero, antes de
+      descargar 250 GB.
+- [ ] Extraer blobs del firmware stock del XT2435 exacto del usuario.
+- [ ] `device/churros/taipei`: BoardConfig, extract_files, proprietary-files.
+- [ ] SELinux de MediaTek (el trabajo más caro del port).
+
 ## Siguiente — desbloquea todo lo demás
 
-- [ ] **Elegir el primer dispositivo** y traer su device tree. Sin esto no hay
-      ROM instalable. Candidatos: un Pixel 6/7 (device trees públicos, blobs de
-      vendor ya extraídos) para validar la cadena completa, y después un
-      Snapdragon de gama media.
+- [ ] **Elegir un segundo dispositivo** para validar la cadena completa con
+      device tree público. Candidatos: un Pixel 6/7 (TheMuppets, blobs ya
+      extraídos) o un Xiaomi/Nokia con unlock oficial. Si el G55 no se puede
+      desbloquear, este pasa a ser el primero.
 - [ ] **Primer build completo** en máquina de build. Hasta que no haya un
       `boot.img` arrancando, todo lo demás es teoría.
 - [ ] Compilar `native/` con el NDK de la release y committing los binarios

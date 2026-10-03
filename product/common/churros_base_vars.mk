@@ -78,6 +78,9 @@ PRODUCT_PACKAGES -= \
 # -----------------------------------------------------------------------------
 # 6. Ajustes por gama
 # -----------------------------------------------------------------------------
+# OJO: aquí NO va ro.hardware.egl ni nada de la GPU. Eso es dato del
+# dispositivo (Adreno, Mali, PowerVR...) y va en el device tree / flavor del
+# dispositivo. Ver product/flavors/taipei/device.mk para un ejemplo real.
 ifeq ($(CHURROS_TIER),lowend)
 
   # Dispositivos de 1-2 GB: modo low-ram, sin multitasking, procesos limitados
@@ -89,8 +92,7 @@ ifeq ($(CHURROS_TIER),lowend)
       dalvik.vm.heapsize=192m \
       ro.zygote.preloadsize_hint=48m \
       persist.sys.low_ram=true \
-      ro.config.avoid_gfx_acceleration=false \
-      ro.hardware.egl=adreno
+      ro.config.avoid_gfx_acceleration=false
 
   # Sin apps que consumen batería sin necesidad
   PRODUCT_PACKAGES -= \
@@ -111,7 +113,6 @@ else ifeq ($(CHURROS_TIER),mid)
   PRODUCT_SYSTEM_PROPERTIES += \
       dalvik.vm.heapgrowthlimit=256m \
       dalvik.vm.heapsize=512m \
-      ro.hardware.egl=adreno \
       persist.sys.low_ram=false
 
 else ifeq ($(CHURROS_TIER),high)
@@ -120,7 +121,6 @@ else ifeq ($(CHURROS_TIER),high)
   PRODUCT_SYSTEM_PROPERTIES += \
       dalvik.vm.heapgrowthlimit=512m \
       dalvik.vm.heapsize=1024m \
-      ro.hardware.egl=adreno \
       debug.stagefright.caching_enabled=true
 
 endif

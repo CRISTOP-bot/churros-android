@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ChurrOS Android — manifest de dispositivo
+  Motorola moto g55 5G (codename: taipei)
+
+  HARDWARE (verificado, ver docs/08-moto-g55-taipei.md):
+    SoC        MediaTek Dimensity 7025 = MT6855V/ATZA (plataforma mt6855)
+    CPU        2x A78 2.5 GHz + 6x A55 2.0 GHz, arm64
+    GPU        IMG PowerVR BXM-8-256 (B-Series, drivers PROPIETARIOS)
+    RAM        8 GB LPDDR4X
+    Pantalla   2400x1080, panel tm_nt36672c_vid_649_1080, táctil NVT-ts
+    Kernel     5.10.218-android12-9 (Android 14/15 sobre kernel de Android 12)
+    Modelos    XT2435-1 (US/AVACO), XT2435-2 (EU/RETEU), XT2435-3 (CN/CMCC)
+    Producto   motorola/taipei_g_sys{a,e,n}
+
+  AVISO IMPORTANTE: Motorola NO tiene programa de desbloqueo de bootloader
+  abierto. Sin bootloader desbloqueado no hay flash de ROM custom. Ver el
+  apartado "Bloqueantes" de docs/08-moto-g55-taipei.md antes de descargar 250 GB.
+
+  Este manifest no compila todavía. Falta el device tree propio
+  (device/churros/taipei) con los blobs de vendor extraídos del firmware
+  stock. Los <project> de abajo son las fuentes reales que existen hoy.
+-->
+<manifest>
+  <!--
+    Kernel de Motorola para SoCs MediaTek. Es un monorepo: el defconfig y la
+    rama concretos para taipei se indican en BoardConfig.mk del device tree.
+    Ramo típico para MT6855 + Android 12: android-12-mediatek-mt68xx.
+  -->
+  <project path="kernel/mediatek"
+           name="kernel-mtk"
+           remote="motorola"
+           clone-depth="1" />
+
+  <!--
+    Módulos de conectividad del kernel (WLAN Gen4m, Bluetooth MT66xx,
+    GPS, conninfra/connfem). Vienen como repos separados en el release de
+    Motorola; si el kernel del device tree los trae built-in, se pueden
+    quitar de aquí.
+  -->
+  <project path="vendor/mediatek/kernel_modules/connectivity/common"
+           name="vendor-mediatek-kernel_modules-connectivity-common"
+           remote="motorola"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/conninfra"
+           name="vendor-mediatek-kernel_modules-connectivity-conninfra"
+           remote="motorola"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/connfem"
+           name="vendor-mediatek-kernel_modules-connectivity-connfem"
+           remote="motorola"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/bt/mt66xx"
+           name="vendor-mediatek-kernel_modules-connectivity-bt-mt66xx"
+           remote="motorola"
+           clone-depth="1" />
+  <project path="vendor/mediatek/kernel_modules/connectivity/gps"
+           name="vendor-mediatek-kernel_modules-connectivity-gps"
+           remote="motorola"
+           clone-depth="1" />
+</manifest>
