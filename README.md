@@ -76,6 +76,7 @@ Ejemplos de iteración:
 | [docs/07-medicion.md](docs/07-medicion.md) | Cómo medir para justificar un ajuste |
 | [docs/08-moto-g55-taipei.md](docs/08-moto-g55-taipei.md) | Port al Motorola moto g55 5G (Dimensity 7025) |
 | [docs/09-redmi-pad-2-taiko.md](docs/09-redmi-pad-2-taiko.md) | Port al Xiaomi Redmi Pad 2 (Helio G100-Ultra) |
+| [docs/10-peso-y-tiempos.md](docs/10-peso-y-tiempos.md) | Qué se quita para ganar peso y tiempo de build, y cómo se mide |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dónde va cada tipo de cambio |
 
 ## Layout
@@ -95,11 +96,18 @@ scripts/measure/        métricas por adb (arranque, reposo, memoria, gfx)
 
 ## Optimización en resumen
 
-Todo lo que se toca está justificado en
-[docs/03-optimizacion.md](docs/03-optimizacion.md): flags nativos (`-O3`,
-ThinLTO), R8 en modo completo, recorte de apps de AOSP, props de ART y
-`ro.config.low_ram` en gama baja, y una capa de init que ajusta I/O, zRAM con
-zstd, vm tuning, umbrales de lmkd y governor de CPU.
+Tres ejes, cada uno con su documento:
+
+| Eje | Qué se toca | Dónde se justifica |
+|---|---|---|
+| **Peso** | 24 apps de AOSP fuera, R8 en modo completo, modo de preopt de dex, locales `en es` | [docs/10-peso-y-tiempos.md](docs/10-peso-y-tiempos.md) |
+| **Tiempo de build** | sin dex por módulo, sin Baseline Profiles, `-O2` por defecto, CTS/VTS fuera | [docs/10-peso-y-tiempos.md](docs/10-peso-y-tiempos.md) |
+| **Rendimiento en runtime** | flags nativos, props de ART y `ro.config.low_ram`, init de I/O, zRAM con zstd, umbrales de lmkd, governor | [docs/03-optimizacion.md](docs/03-optimizacion.md) |
+
+`./churros build` anota cada build (segundos, jobs, aciertos de ccache, ajustes)
+en `out/churros-build-stats.tsv`, y `./churros analyze --compare` contrasta
+peso y tiempos de la build actual contra la anterior. Sin eso, optimizar es
+decreto.
 
 Lo que deliberadamente **no** se hace: parchear el kernel en caliente, tocar
 flags de CTS/VTS, ni nada que rompa la estabilidad del arranque.

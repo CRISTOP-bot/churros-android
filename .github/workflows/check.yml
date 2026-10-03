@@ -21,6 +21,10 @@ jobs:
       - name: ./churros check
         run: ./churros check
 
+      # El apartado que valida las variables PRODUCT_* contra el árbol AOSP
+      # necesita el árbol descargado; en CI sólo comprueba que el script no
+      # rompe cuando no está. Ver docs/10-peso-y-tiempos.md §4.
+
       - name: XML de los manifests
         run: |
           for f in manifests/*.xml manifests/devices/*.xml; do
