@@ -29,6 +29,16 @@
           fetch="https://github.com/MotorolaMobilityLLC"
           review="https://github.com/MotorolaMobilityLLC" />
 
+  <!--
+    Nadie publica código abierto de los teléfonos Xiaomi: sólo el kernel y los
+    módulos de conectividad de la plataforma mt6789 (los publica el equipo
+    xiaomi-mt6789-devs, que mantiene el Redmi Pad). Los blobs de /vendor
+    (Mali, cámara, RIL) NO se publican y hay que extraerlos del firmware.
+  -->
+  <remote name="xiaomi-mt6789-devs"
+          fetch="https://github.com/xiaomi-mt6789-devs"
+          review="https://github.com/xiaomi-mt6789-devs" />
+
   <remote name="churros-devices"
           fetch="https://github.com/Hoyuse/churros-android-devices"
           review="https://github.com/Hoyuse/churros-android-devices"/>

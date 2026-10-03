@@ -28,12 +28,21 @@ Estado real del proyecto, en orden de lo que desbloquea lo siguiente.
 - [ ] `device/churros/taipei`: BoardConfig, extract_files, proprietary-files.
 - [ ] SELinux de MediaTek (el trabajo más caro del port).
 
+## Dispositivo en curso: Redmi Pad 2 (`taiko`) — el prioritario
+
+- [x] Hardware documentado y verificado ([docs/09](09-redmi-pad-2-taiko.md)).
+- [x] Manifest de dispositivo con las fuentes reales (kernel y device tree
+      públicos de `xiaomi-mt6789-devs`, la misma plataforma mt6789).
+- [x] Flavor `churros-taiko` con `ro.hardware.egl=mali` y heaps para 4-8 GB.
+- [ ] Registrar el token de Mi Unlock y esperar las 168 h. Es el camino
+      crítico: tarda días y bloquea todo lo demás.
+- [ ] Extraer los blobs del HyperOS 2 de la variante concreta.
+- [ ] `device/churros/taiko`, adaptando el de `yunluo` al panel 1600x2560.
+
 ## Siguiente — desbloquea todo lo demás
 
-- [ ] **Elegir un segundo dispositivo** para validar la cadena completa con
-      device tree público. Candidatos: un Pixel 6/7 (TheMuppets, blobs ya
-      extraídos) o un Xiaomi/Nokia con unlock oficial. Si el G55 no se puede
-      desbloquear, este pasa a ser el primero.
+- [ ] Validar la cadena de build completa. Si el G55 no llega a desbloquearse,
+      el Redmi Pad 2 pasa a ser el primero y el G55 el segundo.
 - [ ] **Primer build completo** en máquina de build. Hasta que no haya un
       `boot.img` arrancando, todo lo demás es teoría.
 - [ ] Compilar `native/` con el NDK de la release y committing los binarios

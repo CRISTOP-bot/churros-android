@@ -107,9 +107,13 @@ while IFS= read -r fdir; do
     bad "$name no tiene AndroidProducts.mk (lunch $name no lo encontraría)"
     continue
   fi
-  grep -q "^PRODUCT_NAME := $name$" "$ap" \
-    && ok "$name declara PRODUCT_NAME en AndroidProducts.mk" \
-    || bad "$name: PRODUCT_NAME no coincide con el directorio"
+  # Un flavor de gama se llama igual que su directorio; uno de dispositivo
+  # lleva el prefijo churros- (churros-taiko para el directorio taiko).
+  if grep -qE "^PRODUCT_NAME := ($name|churros-$name)$" "$ap"; then
+    ok "$name declara PRODUCT_NAME en AndroidProducts.mk"
+  else
+    bad "$name: PRODUCT_NAME no coincide con el directorio (ni $name ni churros-$name)"
+  fi
 done < <(find "$REPO_DIR/product/flavors" -mindepth 1 -maxdepth 1 -type d | sort)
 
 # Cada manifest de dispositivo debe tener su flavor, y viceversa.
@@ -196,11 +200,14 @@ for d in "$REPO_DIR"/product/flavors/*/; do
     bad "$name no termina declarando ro.churros.tier"
   fi
 
-  # Un device tree sin doc de referencia es la via a horas perdidas
-  doc="$REPO_DIR/docs/08-$name.md"
-  [ "$name" = "taipei" ] && doc="$REPO_DIR/docs/08-moto-g55-taipei.md"
-  [ -f "$doc" ] && ok "$name tiene documento de referencia" \
-    || printf '  \033[1;33mAVISO\033[0m %s sin documento en docs/ (se pierde el contexto del hw)\n' "$name"
+  # Un dispositivo sin documento de referencia es la via a horas perdidas.
+  # Se busca docs/<NN>-*-<name>.md para no tener una lista hardcodeada aqui.
+  doc=$(find "$REPO_DIR/docs" -maxdepth 1 -name "*-$name.md" | sort | head -1)
+  if [ -n "$doc" ]; then
+    ok "$name documentado en docs/$(basename "$doc")"
+  else
+    printf '  \033[1;33mAVISO\033[0m %s sin documento en docs/*-%s.md (se pierde el contexto del hw)\n' "$name" "$name"
+  fi
 done
 
 # Nada de datos de GPU en el producto comun: eso depende del dispositivo.
