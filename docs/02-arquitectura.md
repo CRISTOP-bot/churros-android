@@ -26,11 +26,17 @@ scripts/cli/
   env.sh      dependencias del host
   sync.sh     repo init + repo sync + copia de product/
   build.sh    lunch + make, con aplicación de parches
+  native.sh   compila native/*.c con el NDK -> prebuilts/bin/<abi>/
   check.sh    comprobaciones estáticas
   doctor.sh   requisitos del host
   clean.sh    limpieza
 
-prebuilts/bin/<arch>/   binarios NDK que se copian a /system/bin
+native/                 fuentes C de los binarios de runtime
+  churros_lmkd_tuner.c  umbrales de presión de memoria (gama baja)
+  churros_zramd.c       registra zRAM con zstd y activa el swap
+prebuilts/bin/<abi>/    binarios que product/common/churros_base_init.mk copia
+                        a /system/bin
+patches/                parches a la plataforma, aplicados con `repo apply`
 ```
 
 ## Flujo de un cambio
@@ -39,8 +45,12 @@ prebuilts/bin/<arch>/   binarios NDK que se copian a /system/bin
 2. `./churros build --lunch churros-lite` hace `rsync` de `product/` al
    workspace y compila. No hace falta re-sincronizar 250 GB.
 3. Si el cambio es de plataforma (no de producto), va como parche en
-   `patches/*.patch`; `build.sh` los aplica en orden antes de compilar, y
-   salta los que ya no apliquen.
+   `patches/*.patch`; `build.sh` los aplica con `repo apply` antes de compilar.
+   Un parche que ya está aplicado se reconoce y se salta; uno que no aplica
+   contra la rama actual se avisa y se omite, para no romper el build. Con
+   `--skip-patches` se desactivan.
+4. Los cambios en `native/` necesitan `./churros native` para regenerar los
+   binarios; `build.sh` los copia al workspace, pero no los recompila.
 
 ## Por qué `CHURROS_TIER` es una variable de entorno
 
@@ -63,4 +73,6 @@ El rc de init distingue gamas en runtime con la prop
 | Cambiar algo en arranque | `init/churros.rc` |
 | Añadir un dispositivo | `manifests/devices/*.xml` + `product/flavors/<flavor>/device.mk` |
 | Parchear la plataforma | `patches/*.patch` |
-| Cambiar la Potencia de build | `scripts/cli/build.sh` |
+| Añadir un binario de runtime | `native/*.c` + `scripts/cli/native.sh` + servicio en `init/churros.rc` + `PRODUCT_COPY_FILES` en `churros_base_init.mk` |
+| Parchear la plataforma | `patches/*.patch` (se aplican con `repo apply`) |
+| Cambiar la potencia de build | `scripts/cli/build.sh` |

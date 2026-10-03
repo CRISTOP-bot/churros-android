@@ -1,0 +1,40 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Comprobaciones estáticas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar herramientas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck libxml2-utils
+
+      - name: ./churros check
+        run: ./churros check
+
+      - name: XML de los manifests
+        run: |
+          for f in manifests/*.xml manifests/devices/*.xml; do
+            xmllint --noout "$f"
+          done
+
+  manutenibilidad:
+    name: Avisos de shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: shellcheck (info + warning)
+        run: |
+          # A nivel informativo: un warning no rompe el CI, pero se reporta.
+          shellcheck -S warning -e SC1091 scripts/cli/*.sh churros || true

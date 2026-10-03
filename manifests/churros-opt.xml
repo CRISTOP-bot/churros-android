@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ChurrOS Android — fragmento de optimización.
-  Sólo parches de upstream AOSP que no rompen CTS. No es una ROM custom:
-  aquí únicamente cambiamos cosas de bajo riesgo con gain alto en potencia.
+  ChurrOS Android — fragmento de optimización
+
+  Sólo proyectos que no rompen CTS y cuyos cambios son mantenibles por
+  nosotros. Nada aquí modifica la plataforma AOSP en sí: las optimizaciones
+  que requieren tocar código de AOSP van como parches en patches/*.patch.
 -->
 <manifest>
-  <!-- zRAM + swap gestionado por userspace (sin parche de kernel) -->
+  <!--
+    SwiftShader: driver GL por software. En gama baja lo quitamos del producto
+    (PRODUCT_PACKAGES -= SoftwareRenderer), pero el proyecto debe existir para
+    que el fallback de render del sistema compile.
+  -->
   <project path="external/android-swiftshader"
            name="external/android-swiftshader"
+           groups="churros-opt" />
+
+  <!-- Herramientas de línea de comandos que usa el init rc en debug builds -->
+  <project path="external/boringssl"
+           name="external/boringssl"
            groups="churros-opt" />
 </manifest>

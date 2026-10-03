@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ChurrOS Android — manifest base
-  Usa la release AOSP oficial (platform-tools_r*-cts / manifest Branch).
 
-  AOSP puro = sin GAPPS ni drivers privativos. El device tree (vendor blobs,
-  bootloader, kernel) lo añade el manifest de nivel correspondente.
+  AOSP puro, sin GAPPS ni drivers privativos. El device tree concreto
+  (kernel, blobs de vendor, bootloader) lo añade el manifest de gama
+  correspondiente en manifests/devices/.
+
+  Uso:
+    repo init -u manifests/default.xml -b android15-release
 -->
 <manifest>
   <remote name="aosp"
           fetch="https://android.googlesource.com/platform/manifest"
           review="https://android.googlesource.com/platform/manifest"/>
 
-  <!-- Nivel de release y rama. Se sobreescribe con CHURROS_BRANCH al sincronizar. -->
-  <default remote="aosp"
-           name="android-${RELEASE_BRANCH}"
-           revision="refs/heads/${RELEASE_BRANCH}"/>
+  <!--
+    Repositorio de device trees de ChurrOS. Los manifests de gama lo referencian
+    por nombre; si prefieres usar los device trees de LineageOS directamente,
+    cambia el fetch por https://github.com/LineageOS y los <project name=...>
+    de manifests/devices/*.xml.
+  -->
+  <remote name="churros-devices"
+          fetch="https://github.com/Hoyuse/churros-android-devices"
+          review="https://github.com/Hoyuse/churros-android-devices"/>
 
+  <!-- Herramientas de build fuera del repo de platform -->
   <project path="build/soong"
            name="build/soong"
            groups="aosp-build-extras" />
@@ -25,25 +34,40 @@
   <project path="build/make"
            name="build/make"
            groups="aosp-build-extras" />
+  <project path="external/treble"
+           name="external/treble"
+           groups="aosp-build-extras" />
 
+  <!-- Runtime -->
   <project path="art"
            name="art"
            groups="aosp-runtime" />
-  <project path="frameworks/base"
-           name="frameworks/base"
-           groups="aosp-framework" />
+  <project path="libartbase"
+           name="libartbase"
+           groups="aosp-runtime" />
   <project path="frameworks/native"
            name="frameworks/native"
            groups="aosp-runtime" />
-  <project path="framewares/opt/netd" tools:ignore="InvalidProjectName"
+
+  <!-- Framework -->
+  <project path="frameworks/base"
+           name="frameworks/base"
+           groups="aosp-framework" />
+  <project path="frameworks/opt/netd"
            name="frameworks/opt/netd"
            groups="aosp-framework" />
+  <project path="frameworks/opt/telephony"
+           name="frameworks/opt/telephony"
+           groups="aosp-framework" />
+
+  <!-- Núcleo del sistema -->
   <project path="system/core"
            name="system/core"
            groups="aosp-core" />
   <project path="system/init"
            name="system/init"
            groups="aosp-core" />
-
-  <project path="external/treble" name="external/treble" />
+  <project path="system/sepolicy"
+           name="system/sepolicy"
+           groups="aosp-core" />
 </manifest>

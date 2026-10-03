@@ -18,14 +18,14 @@ echo "ChurrOS Android — check"
 head_ "Sintaxis bash"
 while IFS= read -r f; do
   bash -n "$f" 2>/dev/null && ok "$f" || bad "$f"
-done < <(find "$REPO_DIR/scripts" "$REPO_DIR/env" -name '*.sh' 2>/dev/null)
+done < <(find "$REPO_DIR/scripts" -name '*.sh' 2>/dev/null)
 bash -n "$REPO_DIR/churros" && ok "churros" || bad "churros"
 
 if command -v shellcheck >/dev/null 2>&1; then
   head_ "shellcheck (error)"
   while IFS= read -r f; do
     if shellcheck -S error -e SC1091 "$f" 2>/dev/null; then ok "$f"; else bad "$f"; fi
-  done < <(find "$REPO_DIR/scripts" "$REPO_DIR/env" "$REPO_DIR/churros" -name '*.sh' 2>/dev/null)
+  done < <(find "$REPO_DIR/scripts" -name '*.sh' 2>/dev/null; printf '%s\n' "$REPO_DIR/churros")
 fi
 
 # --- XML ------------------------------------------------------------------
@@ -110,33 +110,78 @@ if [ -f "$RC" ]; then
   rm -f /tmp/churros-svc.$$
 fi
 
+# --- Nativo ---------------------------------------------------------------
+head_ "Binarios nativos"
+for f in "$REPO_DIR"/native/*.c; do
+  [ -e "$f" ] || continue
+  if command -v gcc >/dev/null 2>&1; then
+    gcc -fsyntax-only -Wall "$f" 2>/dev/null && ok "$(basename "$f")" || bad "$(basename "$f") no compila"
+  else
+    ok "$(basename "$f") (omitido: sin gcc)"
+  fi
+done
+# Cada servicio del rc debe tener un binario o ser un script del sistema
+if [ -f "$RC" ]; then
+  for svc in $(awk '/^service /{print $3}' "$RC"); do
+    [ -n "$svc" ] || continue
+    bin=$(basename "$svc")
+    grep -q "$bin" "$REPO_DIR/product/common/churros_base_init.mk" \
+      && ok "servicio $bin declarado en churros_base_init.mk" \
+      || printf '  \033[1;33mAVISO\033[0m servicio %s sin binario declarado\n' "$bin"
+  done
+fi
+
 # --- Prebuilts referenciados ---------------------------------------------
 head_ "Binarios referenciados por PRODUCT_COPY_FILES"
 for arch in arm64-v8a armeabi-v7a; do
   for b in churros_lmkd_tuner churros_zramd; do
     p="$REPO_DIR/prebuilts/bin/$arch/$b"
-    [ -f "$p" ] && ok "$arch/$b" || printf '  \033[1;33mPENDIENTE\033[0m %s (compilar con NDK)\n' "$arch/$b"
+    [ -f "$p" ] && ok "$arch/$b" || printf '  \033[1;33mPENDIENTE\033[0m %s (./churros native)\n' "$arch/$b"
   done
 done
 
 # --- No UTF-8-NC en código ------------------------------------------------
 head_ "Codificación"
-if grep -rlP '[\x{3000}-\x{9FFF}\x{FF00}-\x{FFEF}]' "$REPO_DIR/scripts" "$REPO_DIR/product" "$REPO_DIR/docs" "$REPO_DIR/churros" 2>/dev/null | grep -q .; then
+if grep -rlP '[\x{3000}-\x{9FFF}\x{FF00}-\x{FFEF}]' "$REPO_DIR/scripts" "$REPO_DIR/product" "$REPO_DIR/docs" "$REPO_DIR/native" "$REPO_DIR/churros" 2>/dev/null | grep -q .; then
   bad "caracteres CJK fuera de lugar en el código:"
-  grep -rlP '[\x{3000}-\x{9FFF}\x{FF00}-\x{FFEF}]' "$REPO_DIR/scripts" "$REPO_DIR/product" "$REPO_DIR/churros" 2>/dev/null | sed 's/^/        /'
+  grep -rlP '[\x{3000}-\x{9FFF}\x{FF00}-\x{FFEF}]' "$REPO_DIR/scripts" "$REPO_DIR/product" "$REPO_DIR/native" "$REPO_DIR/churros" 2>/dev/null | sed 's/^/        /'
 else
-  ok "sin caracteres CJK en scripts/product"
+  ok "sin caracteres CJK en código"
 fi
 
 # --- Docs -----------------------------------------------------------------
 head_ "Documentación"
 for d in README.md \
+         CONTRIBUTING.md \
          docs/01-entorno-arch.md \
          docs/02-arquitectura.md \
          docs/03-optimizacion.md \
-         docs/04-dispositivos.md; do
+         docs/04-dispositivos.md \
+         docs/05-flashing.md \
+         docs/06-roadmap.md; do
   [ -f "$REPO_DIR/$d" ] && ok "$d" || bad "$d falta"
 done
+
+# Todos los documentos del índice deben existir
+head_ "Índice del README"
+if [ -f "$REPO_DIR/README.md" ]; then
+  while IFS= read -r link; do
+    [ -f "$REPO_DIR/$link" ] && ok "README -> $link" || bad "README enlaza a $link pero no existe"
+  done < <(grep -oP '\]\(\K[^)#]+(?=\))' "$REPO_DIR/README.md" | grep -v '^https\?://')
+fi
+
+# --- Repo ----------------------------------------------------------------
+head_ "Higiene del repo"
+for f in LICENSE .editorconfig .github/workflows/check.yml; do
+  [ -f "$REPO_DIR/$f" ] && ok "$f" || bad "$f falta"
+done
+if git -C "$REPO_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+  BRANCH=$(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD)
+  [ "$BRANCH" = "main" ] && printf '  \033[1;33mAVISO\033[0m estás en main; usa una rama\n' \
+                        || ok "rama actual: $BRANCH"
+else
+  printf '  \033[1;33mAVISO\033[0m no es un repositorio git\n'
+fi
 
 echo
 printf 'Resumen: %d OK, %d fallos\n' "$OK" "$FAIL"

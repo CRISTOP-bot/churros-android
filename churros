@@ -12,6 +12,7 @@ case "$CMD" in
   env|setup)   exec bash "$REPO_DIR/scripts/cli/env.sh" "$@" ;;
   sync)        exec bash "$REPO_DIR/scripts/cli/sync.sh" "$@" ;;
   build)       exec bash "$REPO_DIR/scripts/cli/build.sh" "$@" ;;
+  native)      exec bash "$REPO_DIR/scripts/cli/native.sh" "$@" ;;
   doctor)      exec bash "$REPO_DIR/scripts/cli/doctor.sh" "$@" ;;
   check)       exec bash "$REPO_DIR/scripts/cli/check.sh" "$@" ;;
   clean)       exec bash "$REPO_DIR/scripts/cli/clean.sh" "$@" ;;
@@ -19,17 +20,27 @@ case "$CMD" in
     cat <<'EOF'
 ChurrOS Android — ROM multi-gama basada en AOSP
 
-  ./churros env                Instalar dependencias del host (Arch Linux)
-  ./churros sync               Descargar el árbol de fuentes con repo
-  ./churros build --lunch churros-lite
-  ./churros doctor             Comprobar que el host puede compilar
-  ./churros check              Comprobaciones estáticas del repo (rápido)
-  ./churros clean [--full]     Limpiar out/ y .repo
+  ./churros doctor                  ¿Puede este host compilar AOSP?
+  ./churros env                     Dependencias del host (Arch Linux)
+  ./churros sync [--tier lowend]    Descarga el árbol de fuentes (~250 GB)
+  ./churros build --lunch churros   Compila (usa CHURROS_TIER)
+  ./churros native                  Compila los binarios NDK de native/
+  ./churros check                   Comprobaciones estáticas del repo
+  ./churros clean [--full]          Limpia out/ y ccache
 
-Variables de entorno relevantes:
+Ejemplos:
+  ./churros sync --tier mid
+  ./churros build --lunch churros-lite --tier lowend --jobs 32
+  ./churros build --lunch churros-pro --target aosp_arm64 --make-arg m services
+
+Variables de entorno:
   RELEASE_BRANCH  rama de AOSP (por defecto android15-release)
+  SRC_DIR         workspace del árbol (por defecto ~/android/churros)
   CHURROS_TIER    lowend | mid | high
   BUILD_JOBS      jobs de make (por defecto nproc)
+  NDK             ruta al NDK para ./churros native
+
+Más detalle en docs/ y en ./churros doctor.
 EOF
     ;;
   *) echo "churros: comando desconocido: $CMD (prueba ./churros help)" >&2; exit 2 ;;

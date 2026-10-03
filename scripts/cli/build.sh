@@ -16,6 +16,8 @@ BUILD_TYPE="userdebug"
 CHURROS_TIER="${CHURROS_TIER:-mid}"
 BUILD_TARGET=""
 BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
+CHURROS_TARGET="${CHURROS_TARGET:-aosp_arm64}"
+SKIP_PATCHES=0
 EXTRA_MAKE_ARGS=()
 
 while [ $# -gt 0 ]; do
@@ -24,11 +26,13 @@ while [ $# -gt 0 ]; do
     --src) SRC_DIR="$2"; shift 2 ;;
     --tier) CHURROS_TIER="$2"; shift 2 ;;
     --jobs|-j) BUILD_JOBS="$2"; shift 2 ;;
-    --eng|--userdebug) BUILD_TYPE="$2"; shift 2 ;;
+    --eng) BUILD_TYPE="eng"; shift ;;
+    --userdebug) BUILD_TYPE="userdebug"; shift ;;
     --user) BUILD_TYPE="user"; shift ;;
     --debug) BUILD_TARGET="eng"; BUILD_TYPE="eng"; shift ;;
     --target) BUILD_TARGET="$2"; shift 2 ;;
     --make-arg) EXTRA_MAKE_ARGS+=("$2"); shift 2 ;;
+    --skip-patches) SKIP_PATCHES=1; shift ;;
     *) echo "build: opción desconocida $1" >&2; exit 2 ;;
   esac
 done
@@ -37,10 +41,8 @@ info() { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 die()  { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 
 case "$CHURROS_TIER" in
-  lowend) CHURROS_TARGET="aosp_arm64" ;;
-  mid)    CHURROS_TARGET="aosp_arm64" ;;
-  high)   CHURROS_TARGET="aosp_arm64" ;;
-  *) die "tier inválido: $CHURROS_TIER" ;;
+  lowend|mid|high) ;;
+  *) die "tier inválido: $CHURROS_TIER (lowend|mid|high)" ;;
 esac
 
 [ -d "$SRC_DIR" ] || die "no existe el workspace: $SRC_DIR (¿./churros sync?)"
@@ -49,24 +51,36 @@ esac
 [ -n "$LUNCH" ] || die "falta --lunch (churros-lite | churros | churros-pro)"
 
 # El producto de ChurrOS vive en este repo; se sincroniza al workspace antes
-# de cada build para que los cambios en product/ se pickedense al momento.
+# de cada build para que los cambios en product/ se reflejen al momento.
 info "Sincronizando product/ al workspace"
 mkdir -p "$SRC_DIR/product"
 rsync -a --delete "$REPO_DIR/product/" "$SRC_DIR/product/"
 
 if [ -d "$REPO_DIR/prebuilts" ]; then
-  rsync -a "$REPO_DIR/prebuilts/" "$SRC_DIR/prebuilts/"
+  rsync -a --exclude 'README.md' "$REPO_DIR/prebuilts/" "$SRC_DIR/prebuilts/"
 fi
 
-if [ -d "$REPO_DIR/patches" ]; then
-  info "Aplicando parches de churros/patches"
-  repo_diffs="$SRC_DIR/churros.patches"
-  rm -f "$repo_diffs"
+# Parches de plataforma. Se aplican con `repo apply`, que sabe resolver el
+# proyecto correcto dentro del multi-repo de AOSP. Un parche que no aplica
+# (porque la rama de AOSP cambió) se avisa y se salta: no se rompe el build.
+APPLY_PATCHES=1
+if [ "$SKIP_PATCHES" -eq 1 ]; then
+  APPLY_PATCHES=0
+  info "Saltando la aplicación de parches (--skip-patches)"
+fi
+
+if [ "$APPLY_PATCHES" -eq 1 ] && compgen -G "$REPO_DIR/patches/*.patch" >/dev/null; then
+  info "Aplicando parches de patches/"
   for p in "$REPO_DIR"/patches/*.patch; do
     [ -e "$p" ] || continue
-    git -C "$SRC_DIR" apply --check "$p" 2>/dev/null && git -C "$SRC_DIR" apply "$p" && printf '%s\n' "$p" >>"$repo_diffs" || {
-      info "el parche $(basename "$p") ya está aplicado o no aplica contra esta rama; se omite"
-    }
+    name=$(basename "$p")
+    if (cd "$SRC_DIR" && repo apply --check "$p" >/dev/null 2>&1); then
+      (cd "$SRC_DIR" && repo apply "$p") && info "  aplicado $name"
+    elif (cd "$SRC_DIR" && repo apply --reverse-check "$p" >/dev/null 2>&1); then
+      info "  ya aplicado: $name"
+    else
+      printf '  \033[1;33m[omitido]\033[0m %s no aplica contra esta rama de AOSP\n' "$name"
+    fi
   done
 fi
 
