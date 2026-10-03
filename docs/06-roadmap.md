@@ -10,7 +10,9 @@ Estado real del proyecto, en orden de lo que desbloquea lo siguiente.
 - [x] Capa de optimización: flags de compilación, props de ART/low-ram,
       recorte de bloat, init rc (I/O, zRAM, vm tuning, lmkd, governor).
 - [x] Fuentes C de los binarios de runtime + `./churros native`.
-- [x] CLI: `doctor`, `env`, `sync`, `build`, `native`, `check`, `clean`.
+- [x] CLI: `doctor`, `env`, `sync`, `build`, `native`, `devices`, `flash`, `measure`,
+      `check`, `clean`.
+- [x] Guía de medición (`docs/07-medicion.md`) para justificar cada ajuste.
 - [x] CI con `./churros check` y shellcheck.
 
 ## Siguiente — desbloquea todo lo demás

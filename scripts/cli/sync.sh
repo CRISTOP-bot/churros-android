@@ -20,7 +20,15 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --branch) RELEASE_BRANCH="$2"; shift 2 ;;
     --tier)   CHURROS_TIER="$2"; shift 2 ;;
-    --device) DEVICE_MANIFEST="manifests/devices/$2.xml"; shift 2 ;;
+    --device)
+      DEVICE_MANIFEST="manifests/devices/$2.xml"
+      [ -f "$REPO_DIR/$DEVICE_MANIFEST" ] || {
+        echo "sync: no existe el manifest $DEVICE_MANIFEST" >&2
+        echo "      disponibles:" >&2
+        ls "$REPO_DIR/manifests/devices" >&2
+        exit 2
+      }
+      shift 2 ;;
     --src)    SRC_DIR="$2"; shift 2 ;;
     --jobs|-j) JOBS="$2"; shift 2 ;;
     *) echo "sync: opción desconocida $1" >&2; exit 2 ;;
@@ -38,7 +46,10 @@ case "$CHURROS_TIER" in
   high)   MANIFESTS+=("$REPO_DIR/manifests/devices/high.xml") ;;
   *) echo "tier inválido: $CHURROS_TIER (lowend|mid|high)" >&2; exit 2 ;;
 esac
-[ -n "$DEVICE_MANIFEST" ] && MANIFESTS+=("$REPO_DIR/$DEVICE_MANIFEST")
+if [ -n "$DEVICE_MANIFEST" ]; then
+  MANIFESTS+=("$REPO_DIR/$DEVICE_MANIFEST")
+  info "Device tree: $DEVICE_MANIFEST"
+fi
 
 info "Rama AOSP: $RELEASE_BRANCH"
 info "Gama: $CHURROS_TIER"
